@@ -8,7 +8,7 @@ const messages = [
   "Really sure?? 😳",
   "Come onnnn 💘",
   "Pls pls pls 😭",
-  "I’ll be extra cute today 😌",
+  "Pls dont break my heart 💔",
   "Last chance... 😤",
   "Okay NOW try clicking me 😼"
 ];
@@ -76,3 +76,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   yesButton.addEventListener("click", handleYesClick);
 });
+
