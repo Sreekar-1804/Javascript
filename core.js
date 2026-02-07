@@ -1,4 +1,4 @@
-console.log("Valentine Fancy Script Loaded 💘 (Final Complete)");
+console.log("Valentine Fancy Script Loaded 💘 (Fixed Escape Mode)");
 
 document.addEventListener("DOMContentLoaded", () => {
   // Elements (index page)
@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const hint = document.getElementById("hint");
   const buttonArea = document.getElementById("buttonArea");
 
-  // Optional progress fill (works with <div class="progress"><div id="progressFill"></div></div>)
+  // Optional progress fill
   const progressFill =
     document.getElementById("progressFill") ||
     document.querySelector(".progress > div");
@@ -17,16 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const fxSparkles = document.getElementById("fxSparkles");
   const card = document.querySelector(".card");
 
-  // Are we on index page (buttons exist) or yes page (no buttons)?
   const hasButtons = !!(noBtn && yesBtn && buttonArea);
-
-  // Respect reduced motion
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // =========================================
-  // Fancy FX Layer (works on both pages)
+  // Fancy FX (both pages)
   // =========================================
-  // Floating hearts (ambient)
   if (fxHearts && !reduceMotion) {
     setInterval(() => {
       const h = document.createElement("div");
@@ -41,7 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 650);
   }
 
-  // Sparkles (ambient)
   if (fxSparkles && !reduceMotion) {
     setInterval(() => {
       const s = document.createElement("div");
@@ -53,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 260);
   }
 
-  // 3D tilt for the card (premium feel)
   if (card && !reduceMotion) {
     const maxTilt = 10;
     card.addEventListener("pointermove", (e) => {
@@ -69,11 +63,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // If we’re on YES page (no buttons), stop here (FX still runs).
+  // If YES page, stop here
   if (!hasButtons) return;
 
   // =========================================
-  // Playful No/Yes Logic (Index page)
+  // Story + State
   // =========================================
   const script = [
     { text: "No 🙃", hint: "Okay… but are you sure? 😼" },
@@ -84,19 +78,20 @@ document.addEventListener("DOMContentLoaded", () => {
     { text: "Okay… fine 😤", hint: "Hehe… one more time then 😈" },
     { text: "…Yes? 😳", hint: "Now try clicking NO again 😈💘" } // last stage
   ];
-
   const lastIndex = script.length - 1;
 
   let clickCount = 0;
   let escapeMode = false;
 
-  // Keep NO nearby so user doesn’t hunt for it
+  // No button “home” inside the buttonArea (relative coords)
+  let home = null; // {x,y} relative to buttonArea
   let noScale = 1;
-  let home = null; // {x,y} viewport coords (NO's original spot)
-  const MAX_WANDER = 90;
 
-  function clamp(val, min, max) {
-    return Math.max(min, Math.min(max, val));
+  // How far it can wander (keeps it visible, no hunting)
+  const MAX_WANDER = 85;
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
   }
 
   function setProgress() {
@@ -111,127 +106,83 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function shrinkNoSlightly() {
-    // gentle, not too aggressive
-    noScale = Math.max(0.72, noScale * 0.93);
+    noScale = Math.max(0.78, noScale * 0.94);
     noBtn.style.transform = `scale(${noScale})`;
   }
 
-  function captureHome() {
-    const r = noBtn.getBoundingClientRect();
-    home = { x: r.left, y: r.top };
-  }
-
-  // Dodge around home within button area bounds
-  function dodgeNoNearHome() {
+  // Convert current NO position into buttonArea-relative coordinates
+  function captureHomeRelative() {
     const areaRect = buttonArea.getBoundingClientRect();
     const noRect = noBtn.getBoundingClientRect();
-    const padding = 10;
+    home = {
+      x: noRect.left - areaRect.left,
+      y: noRect.top - areaRect.top
+    };
+  }
 
-    if (!home) captureHome();
-
-    // Small offsets
-    const ox = (Math.random() * 2 - 1) * MAX_WANDER;
-    const oy = (Math.random() * 2 - 1) * (MAX_WANDER * 0.7);
-
-    let x = home.x + ox;
-    let y = home.y + oy;
-
-    // Clamp to button area
-    const minX = areaRect.left + padding;
-    const maxX = areaRect.right - noRect.width - padding;
-    const minY = areaRect.top + padding;
-    const maxY = areaRect.bottom - noRect.height - padding;
-
-    x = clamp(x, minX, maxX);
-    y = clamp(y, minY, maxY);
-
-    // Clamp to small radius around home
-    x = clamp(x, home.x - MAX_WANDER, home.x + MAX_WANDER);
-    y = clamp(y, home.y - MAX_WANDER, home.y + MAX_WANDER);
-
-    noBtn.style.position = "fixed";
-    noBtn.style.left = x + "px";
-    noBtn.style.top = y + "px";
-    noBtn.style.right = "auto";
-    noBtn.style.bottom = "auto";
+  // Ensure NO is absolutely positioned inside the buttonArea
+  function ensureAbsoluteInsideArea() {
+    // Important: buttonArea must be position: relative in CSS.
+    // Our CSS already does this.
+    noBtn.style.position = "absolute";
     noBtn.style.zIndex = "9999";
   }
 
-  function pointerTooClose(e) {
-    const r = noBtn.getBoundingClientRect();
-    const cx = r.left + r.width / 2;
-    const cy = r.top + r.height / 2;
-    const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-    return dist < 140;
+  // Move NO to a safe position (relative to buttonArea)
+  function moveNoTo(x, y) {
+    const areaRect = buttonArea.getBoundingClientRect();
+    const noRect = noBtn.getBoundingClientRect();
+
+    // After switching to absolute, recompute size safely
+    const btnW = noRect.width;
+    const btnH = noRect.height;
+
+    const padding = 8;
+
+    const minX = padding;
+    const maxX = Math.max(padding, areaRect.width - btnW - padding);
+
+    const minY = padding;
+    const maxY = Math.max(padding, areaRect.height - btnH - padding);
+
+    const cx = clamp(x, minX, maxX);
+    const cy = clamp(y, minY, maxY);
+
+    noBtn.style.left = cx + "px";
+    noBtn.style.top = cy + "px";
+  }
+
+  // Dodge within a small radius around home (so it never disappears)
+  function dodgeNearHome() {
+    if (!home) captureHomeRelative();
+    ensureAbsoluteInsideArea();
+
+    const ox = (Math.random() * 2 - 1) * MAX_WANDER;
+    const oy = (Math.random() * 2 - 1) * (MAX_WANDER * 0.75);
+
+    moveNoTo(home.x + ox, home.y + oy);
+    if (!reduceMotion) shrinkNoSlightly();
+  }
+
+  // Make “No” impossible to click: dodge on pointerdown/touchstart
+  function blockNoClick(e) {
+    if (!escapeMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dodgeNearHome();
+    if (hint) hint.textContent = "Nope 😈 (try YES 💘)";
   }
 
   // =========================================
-  // Events
+  // Main button actions
   // =========================================
   yesBtn.addEventListener("click", () => {
     window.location.href = "yes.html";
   });
 
-  // NO click logic
-  noBtn.addEventListener("click", () => {
-    // Normal stage: cycle messages, no dodging
-    if (!escapeMode) {
-      clickCount = Math.min(clickCount + 1, lastIndex);
-
-      const line = script[clickCount];
-      noBtn.textContent = line.text;
-      if (hint) hint.textContent = line.hint;
-
-      growYes();
-      setProgress();
-
-      // Enable escape ONLY after the last message is shown
-      if (clickCount === lastIndex) {
-        escapeMode = true;
-        noBtn.style.cursor = "not-allowed";
-
-        // Lock home to where it currently is
-        captureHome();
-
-        // Tiny “mode change” cue
-        shrinkNoSlightly();
-
-        // Optional: first small dodge so it feels alive
-        if (!reduceMotion) dodgeNoNearHome();
-      }
-
-      return;
-    }
-
-    // Escape mode: clicking NO makes it dodge, but close by
-    if (!reduceMotion) {
-      dodgeNoNearHome();
-      shrinkNoSlightly();
-    }
-
-    if (hint) hint.textContent = "NO is shy now 😳… just click YES 😈💘";
-  });
-
-  // Escape mode: dodge if pointer is too close
-  document.addEventListener("pointermove", (e) => {
-    if (!escapeMode || reduceMotion) return;
-    if (pointerTooClose(e)) {
-      dodgeNoNearHome();
-      shrinkNoSlightly();
-    }
-  });
-
-  // Escape mode: dodge on hover too
-  noBtn.addEventListener("mouseenter", () => {
-    if (!escapeMode || reduceMotion) return;
-    dodgeNoNearHome();
-    shrinkNoSlightly();
-  });
-
-  // Heart burst on YES hover
+  // Heart burst on YES hover (optional)
   yesBtn.addEventListener("mouseenter", () => {
     if (reduceMotion) return;
-
     const r = yesBtn.getBoundingClientRect();
     for (let i = 0; i < 10; i++) {
       const p = document.createElement("div");
@@ -244,10 +195,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Normal “No” clicks until last message
+  noBtn.addEventListener("click", () => {
+    if (escapeMode) return; // clicks are blocked by pointerdown anyway
+
+    clickCount = Math.min(clickCount + 1, lastIndex);
+
+    const line = script[clickCount];
+    noBtn.textContent = line.text;
+    if (hint) hint.textContent = line.hint;
+
+    growYes();
+    setProgress();
+
+    // Start escape mode ONLY after last message is shown
+    if (clickCount === lastIndex) {
+      escapeMode = true;
+
+      // Capture the "home" position while it's still in normal flow
+      captureHomeRelative();
+
+      // Now convert to absolute inside the area at the same spot
+      ensureAbsoluteInsideArea();
+      moveNoTo(home.x, home.y);
+
+      // Small cue
+      noBtn.style.cursor = "not-allowed";
+      shrinkNoSlightly();
+
+      // First dodge (tiny)
+      if (!reduceMotion) dodgeNearHome();
+    }
+  });
+
+  // Escape mode interactions: dodge before click lands
+  noBtn.addEventListener("pointerdown", blockNoClick);
+  noBtn.addEventListener("touchstart", blockNoClick, { passive: false });
+
+  // Also dodge if you hover close (desktop)
+  document.addEventListener("pointermove", (e) => {
+    if (!escapeMode || reduceMotion) return;
+    const r = noBtn.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    if (Math.hypot(e.clientX - cx, e.clientY - cy) < 140) {
+      dodgeNearHome();
+    }
+  });
+
   // Init
   setProgress();
 });
-
 
 
 
