@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Will you be my Valentine? 💘</title>
 
-   <link rel="stylesheet" href="style.css">
-   <script src="core.js" defer></script>
+  <meta name="description" content="A cute little Valentine page with playful buttons 💘" />
+
+  <link rel="stylesheet" href="style.css">
+  <script src="core.js" defer></script>
 </head>
 <body>
   <div class="bg-hearts" aria-hidden="true"></div>
 
-  <main class="card">
+  <main class="card center" aria-label="Valentine card">
     <div class="badge">💌 Love Request</div>
     <h1>Will you be my Valentine?</h1>
     <p class="sub">This is not random I really love you and wanna be with you forever , I know you are going through a lot but I wanna be there with you in all this. I promise ill keep you happy and with me forever ... Please ? 🥹❤️</p>
@@ -27,9 +29,15 @@
       <button class="btn no-button" id="noBtn" type="button">No 🙃</button>
     </div>
 
-    <div class="hint" id="hint">(Tip: select YES !!!!)</div>
+    <div class="meter" aria-hidden="true">
+      <div class="meter-bar" id="meterBar"></div>
+    </div>
+
+    <div class="hint" id="hint" role="status" aria-live="polite">(Tip: select YES !!!!)</div>
+  
   </main>
 </body>
 </html>
+
 
 
