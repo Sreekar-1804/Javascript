@@ -29,15 +29,22 @@
       <button class="btn no-button" id="noBtn" type="button">No 🙃</button>
     </div>
 
-    <div class="meter" aria-hidden="true">
+    <div class="meter" aria-label="No button progress">
       <div class="meter-bar" id="meterBar"></div>
     </div>
 
     <div class="hint" id="hint" role="status" aria-live="polite">(Tip: select YES !!!!)</div>
+
+    <div class="actions" aria-label="Extra actions">
+      <button class="btn ghost" id="soundBtn" type="button" aria-pressed="false">Sound: Off 🔇</button>
+    </div>
   
   </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
+
 
 
 
