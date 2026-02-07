@@ -155,31 +155,46 @@ function initIndexPage() {
 
   // Move button away (runaway mode)
   function moveAway(cursorX, cursorY) {
-    const rect = noBtn.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
+  const rect = noBtn.getBoundingClientRect();
+  const parentRect = buttonArea.getBoundingClientRect();
 
-    let dx = centerX - cursorX;
-    let dy = centerY - cursorY;
-    const dist = Math.hypot(dx, dy) || 1;
-    dx /= dist;
-    dy /= dist;
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
 
-    const STEP = 90;
-    let newX = rect.left + dx * STEP;
-    let newY = rect.top + dy * STEP;
+  let dx = centerX - cursorX;
+  let dy = centerY - cursorY;
 
-    const padding = 10;
-    newX = clamp(newX, padding, window.innerWidth - rect.width - padding);
-    newY = clamp(newY, padding, window.innerHeight - rect.height - padding);
+  const dist = Math.hypot(dx, dy) || 1;
 
-    noBtn.style.position = "fixed";
-    noBtn.style.left = newX + "px";
-    noBtn.style.top = newY + "px";
-    noBtn.style.right = "auto";
-    noBtn.style.bottom = "auto";
-    noBtn.style.zIndex = "9999";
-  }
+  dx /= dist;
+  dy /= dist;
+
+  const STEP = 80;
+
+  let newX = rect.left + dx * STEP;
+  let newY = rect.top + dy * STEP;
+
+  // 🔥 Clamp INSIDE the card/button area
+  const padding = 10;
+
+  const minX = parentRect.left + padding;
+  const maxX = parentRect.right - rect.width - padding;
+
+  const minY = parentRect.top + padding;
+  const maxY = parentRect.bottom - rect.height - padding;
+
+  newX = Math.max(minX, Math.min(maxX, newX));
+  newY = Math.max(minY, Math.min(maxY, newY));
+
+  // Position relative to viewport but clamped to card
+  noBtn.style.position = "fixed";
+  noBtn.style.left = newX + "px";
+  noBtn.style.top = newY + "px";
+  noBtn.style.right = "auto";
+  noBtn.style.bottom = "auto";
+  noBtn.style.zIndex = "9999";
+}
+
 
   // Reset
   const resetBtn = $("resetBtn");
@@ -427,6 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initIndexPage();
   initYesPage();
 });
+
 
 
 
